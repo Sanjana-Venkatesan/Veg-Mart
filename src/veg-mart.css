@@ -341,13 +341,38 @@
 .veg-dash .kpi-chart { flex: 1; display: flex; flex-direction: column; justify-content: center; margin: 12px 0; }
 .veg-dash .kpi-insight { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); }
 
-/* mini ranked bar list */
-.veg-dash .mini-bars { display: flex; flex-direction: column; gap: 7px; }
-.veg-dash .mini-bar-row { display: grid; grid-template-columns: 76px 1fr 56px; align-items: center; gap: 8px; }
-.veg-dash .mini-bar-label { font-size: 11px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.veg-dash .mini-bar-track { height: 7px; background: var(--track); border-radius: 4px; overflow: hidden; }
-.veg-dash .mini-bar-fill { height: 100%; border-radius: 4px; }
-.veg-dash .mini-bar-value { font-size: 11px; color: var(--text-muted); text-align: right; font-variant-numeric: tabular-nums; }
+/* mini ranked lollipop (dot plot) list */
+.veg-dash .mini-dots { display: flex; flex-direction: column; gap: 9px; }
+.veg-dash .mini-dot-row { display: grid; grid-template-columns: 76px 1fr 56px; align-items: center; gap: 8px; }
+.veg-dash .mini-dot-label { font-size: 11px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 5px of side air so a dot at 0% or 100% sits fully inside the tile */
+.veg-dash .mini-dot-track { padding-inline: 5px; }
+.veg-dash .mini-dot-plot { position: relative; height: 11px; display: flex; align-items: center; }
+
+/* recessive hairline baseline — the scale the dots are read against */
+.veg-dash .mini-dot-plot::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: var(--track);
+}
+
+.veg-dash .mini-dot-stem { position: relative; height: 2px; border-radius: 1px; }
+.veg-dash .mini-dot-mark {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px var(--surface); /* surface ring keeps the dot legible on the rule */
+  transition: transform 0.15s ease;
+}
+.veg-dash .mini-dot-row:hover .mini-dot-mark { transform: translate(-50%, -50%) scale(1.3); }
+
+.veg-dash .mini-dot-value { font-size: 11px; color: var(--text-muted); text-align: right; font-variant-numeric: tabular-nums; }
 
 /* donut / pie */
 .veg-dash .chart-row { display: flex; align-items: center; gap: 16px; }

@@ -213,19 +213,28 @@ const keyInsights = [
 
 // ---- Small building blocks ----
 
-function MiniBarList({ items, color }) {
+// Ranked magnitude, one series, 4-5 rows: a lollipop (dot plot) reads the same
+// position-on-a-common-scale as a bar, with a fraction of the ink — the stem is a
+// 2px rule, and the eye lands on the dot rather than on a block of colour.
+function MiniDotPlot({ items, color }) {
   const max = Math.max(...items.map((i) => i.value));
   return (
-    <div className="mini-bars">
-      {items.map((i) => (
-        <div className="mini-bar-row" key={i.label}>
-          <span className="mini-bar-label" title={i.label}>{i.label}</span>
-          <div className="mini-bar-track">
-            <div className="mini-bar-fill" style={{ width: `${Math.max((i.value / max) * 100, 4)}%`, background: color }} />
+    <div className="mini-dots">
+      {items.map((i) => {
+        const pct = Math.max((i.value / max) * 100, 1.5);
+        return (
+          <div className="mini-dot-row" key={i.label} title={`${i.label}: ${i.display}`}>
+            <span className="mini-dot-label">{i.label}</span>
+            <div className="mini-dot-track">
+              <div className="mini-dot-plot">
+                <div className="mini-dot-stem" style={{ width: `${pct}%`, background: color }} />
+                <span className="mini-dot-mark" style={{ left: `${pct}%`, background: color }} />
+              </div>
+            </div>
+            <span className="mini-dot-value">{i.display}</span>
           </div>
-          <span className="mini-bar-value">{i.display}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -436,7 +445,7 @@ export default function VegMartDashboard() {
             <div className="kpi-eyebrow">Supplier value proposition</div>
             <p className="metric-question">Which suppliers offer the most attractive value?</p>
             <p className="metric-formula">Quality Rating ÷ Avg Purchase Price × (1 − Rejection Rate)</p>
-            <MiniBarList items={valueItems} color="var(--ochre)" />
+            <MiniDotPlot items={valueItems} color="var(--ochre)" />
             <p className="metric-answer">
               <strong>{bestValueSupplier.name}</strong> scores highest ({bestValueSupplier.valueScore.toFixed(3)}) —
               a lower price (₹{bestValueSupplier.avgPrice.toFixed(2)}/kg) at solid quality (
@@ -462,7 +471,7 @@ export default function VegMartDashboard() {
             unit="/kg (wtd avg)"
             insight={`${topByPrice[0].name} priciest at ₹${topByPrice[0].avgPrice.toFixed(2)}/kg, ${topByPrice[1].name} next at ₹${topByPrice[1].avgPrice.toFixed(2)}/kg.`}
           >
-            <MiniBarList items={k1Items} color="var(--brand)" />
+            <MiniDotPlot items={k1Items} color="var(--brand)" />
           </KpiTile>
 
           <KpiTile
@@ -473,7 +482,7 @@ export default function VegMartDashboard() {
             unit="avg spread"
             insight={`${topByVariation.name} widest at ₹${topByVariation.variation.toFixed(2)} — most worth quote-shopping.`}
           >
-            <MiniBarList items={k2Items} color="var(--ochre)" />
+            <MiniDotPlot items={k2Items} color="var(--ochre)" />
           </KpiTile>
 
           <KpiTile
@@ -484,7 +493,7 @@ export default function VegMartDashboard() {
             unit={`${overview.savingPct}% of spend`}
             insight={`${topBySaving[0].name} (₹${Math.round(topBySaving[0].saving)}) and ${topBySaving[1].name} (₹${Math.round(topBySaving[1].saving)}) carry the biggest absolute savings left on the table.`}
           >
-            <MiniBarList items={k3Items} color="var(--ochre)" />
+            <MiniDotPlot items={k3Items} color="var(--ochre)" />
           </KpiTile>
 
           <KpiTile
@@ -509,7 +518,7 @@ export default function VegMartDashboard() {
             unit={`${overview.rejectedKg} of ${overview.orderedKg.toLocaleString("en-IN")} kg`}
             insight={`${worstRejection.name} is the outlier at ${worstRejection.rejectionRate.toFixed(2)}% — ${(worstRejection.rejectionRate / overview.rejectionRate).toFixed(0)}x the weekly average.`}
           >
-            <MiniBarList items={k5Items} color="var(--brick)" />
+            <MiniDotPlot items={k5Items} color="var(--brick)" />
           </KpiTile>
 
           <KpiTile
@@ -520,7 +529,7 @@ export default function VegMartDashboard() {
             unit="/5 across suppliers"
             insight={`${bestQualitySupplier.name} tops at ${bestQualitySupplier.avgQuality.toFixed(2)}; ${topSupplier.name} (${topSupplier.dependencyPct.toFixed(1)}% of spend) rates only ${topSupplier.avgQuality.toFixed(2)} — no quality edge for the dependency.`}
           >
-            <MiniBarList items={k6Items} color="var(--brand)" />
+            <MiniDotPlot items={k6Items} color="var(--brand)" />
           </KpiTile>
 
           <KpiTile
