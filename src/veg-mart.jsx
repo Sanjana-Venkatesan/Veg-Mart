@@ -126,7 +126,9 @@ const k3Items = [...vegetables]
 const k5Items = [...vegetables]
   .filter((v) => v.rejectionRate > 0)
   .sort((a, b) => b.rejectionRate - a.rejectionRate)
-  .map((v) => ({ label: v.name, value: v.rejectionRate, display: `${v.rejectionRate.toFixed(2)}%` }));
+  // `short` drops the parenthetical so the name fits a column's axis slot; the
+  // full name still rides the hover tooltip.
+  .map((v) => ({ label: v.name, short: v.name.replace(/\s*\(.*\)/, ""), value: v.rejectionRate, display: `${v.rejectionRate.toFixed(2)}%` }));
 
 const k6Items = [...suppliers]
   .sort((a, b) => b.avgQuality - a.avgQuality)
@@ -213,7 +215,74 @@ const keyInsights = [
 
 // ---- Small building blocks ----
 
-// Ranked magnitude, one series, 4-5 rows: a lollipop (dot plot) reads the same
+// Ranked magnitude, one series: the plain horizontal bar. Thin, grown from a single
+// baseline, with the data-end rounded and the baseline end square.
+function MiniBarList({ items, color }) {
+  const max = Math.max(...items.map((i) => i.value));
+  return (
+    <div className="mini-bars">
+      {items.map((i) => (
+        <div className="mini-bar-row" key={i.label} title={`${i.label}: ${i.display}`}>
+          <span className="mini-bar-label">{i.label}</span>
+          <div className="mini-bar-track">
+            <div className="mini-bar-fill" style={{ width: `${Math.max((i.value / max) * 100, 2)}%`, background: color }} />
+          </div>
+          <span className="mini-bar-value">{i.display}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Same job as MiniBarList, turned on its side. Used where the categories read as a
+// set to scan across rather than a ranked list to read down.
+function ColumnChart({ items, color }) {
+  const max = Math.max(...items.map((i) => i.value));
+  return (
+    <div className="column-chart">
+      <div className="column-plot">
+        {items.map((i) => (
+          <div className="column-slot" key={i.label} title={`${i.label}: ${i.display}`}>
+            <span className="column-value">{i.display}</span>
+            <div className="column-bar" style={{ height: `${Math.max((i.value / max) * 100, 3)}%`, background: color }} />
+          </div>
+        ))}
+      </div>
+      <div className="column-axis">
+        {items.map((i) => (
+          <span className="column-axis-label" key={i.label}>{i.short ?? i.label}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// For values that cluster in a narrow band (the supplier quality ratings all sit
+// between 4.20 and 4.29). A bar from zero would draw four identical bars; a dot on
+// an explicitly-labelled zoomed scale shows the spread without implying the dots
+// are proportional to anything.
+function ScaleDotStrip({ items, color, min, max }) {
+  return (
+    <div className="scale-strip">
+      {items.map((i) => (
+        <div className="scale-row" key={i.label} title={`${i.label}: ${i.display}`}>
+          <span className="scale-label">{i.label}</span>
+          <div className="scale-track">
+            <span className="scale-dot" style={{ left: `${((i.value - min) / (max - min)) * 100}%`, background: color }} />
+          </div>
+          <span className="scale-value">{i.display}</span>
+        </div>
+      ))}
+      <div className="scale-axis">
+        <span>{min.toFixed(2)}</span>
+        <span className="scale-axis-note">zoomed scale</span>
+        <span>{max.toFixed(2)}</span>
+      </div>
+    </div>
+  );
+}
+
+// Ranked magnitude, one series: a lollipop (dot plot) reads the same
 // position-on-a-common-scale as a bar, with a fraction of the ink — the stem is a
 // 2px rule, and the eye lands on the dot rather than on a block of colour.
 function MiniDotPlot({ items, color }) {
@@ -471,7 +540,7 @@ export default function VegMartDashboard() {
             unit="/kg (wtd avg)"
             insight={`${topByPrice[0].name} priciest at ₹${topByPrice[0].avgPrice.toFixed(2)}/kg, ${topByPrice[1].name} next at ₹${topByPrice[1].avgPrice.toFixed(2)}/kg.`}
           >
-            <MiniDotPlot items={k1Items} color="var(--brand)" />
+            <MiniBarList items={k1Items} color="var(--brand)" />
           </KpiTile>
 
           <KpiTile
@@ -482,7 +551,7 @@ export default function VegMartDashboard() {
             unit="avg spread"
             insight={`${topByVariation.name} widest at ₹${topByVariation.variation.toFixed(2)} — most worth quote-shopping.`}
           >
-            <MiniDotPlot items={k2Items} color="var(--ochre)" />
+            <MiniBarList items={k2Items} color="var(--ochre)" />
           </KpiTile>
 
           <KpiTile
@@ -493,7 +562,7 @@ export default function VegMartDashboard() {
             unit={`${overview.savingPct}% of spend`}
             insight={`${topBySaving[0].name} (₹${Math.round(topBySaving[0].saving)}) and ${topBySaving[1].name} (₹${Math.round(topBySaving[1].saving)}) carry the biggest absolute savings left on the table.`}
           >
-            <MiniDotPlot items={k3Items} color="var(--ochre)" />
+            <MiniBarList items={k3Items} color="var(--ochre)" />
           </KpiTile>
 
           <KpiTile
@@ -518,7 +587,7 @@ export default function VegMartDashboard() {
             unit={`${overview.rejectedKg} of ${overview.orderedKg.toLocaleString("en-IN")} kg`}
             insight={`${worstRejection.name} is the outlier at ${worstRejection.rejectionRate.toFixed(2)}% — ${(worstRejection.rejectionRate / overview.rejectionRate).toFixed(0)}x the weekly average.`}
           >
-            <MiniDotPlot items={k5Items} color="var(--brick)" />
+            <ColumnChart items={k5Items} color="var(--brick)" />
           </KpiTile>
 
           <KpiTile
@@ -529,7 +598,7 @@ export default function VegMartDashboard() {
             unit="/5 across suppliers"
             insight={`${bestQualitySupplier.name} tops at ${bestQualitySupplier.avgQuality.toFixed(2)}; ${topSupplier.name} (${topSupplier.dependencyPct.toFixed(1)}% of spend) rates only ${topSupplier.avgQuality.toFixed(2)} — no quality edge for the dependency.`}
           >
-            <MiniDotPlot items={k6Items} color="var(--brand)" />
+            <ScaleDotStrip items={k6Items} color="var(--brand)" min={4.0} max={4.4} />
           </KpiTile>
 
           <KpiTile
